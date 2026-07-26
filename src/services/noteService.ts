@@ -24,8 +24,8 @@ export async function fetchNotes({
   perPage = 12,
   search = '',
 }: FetchNotesParams): Promise<FetchNotesResponse> {
-  const { data } = await axios.get('/notes', {
-    params: { page, perPage, search },
+  const { data } = await axios.get<FetchNotesResponse>('/notes', {
+    params: { page, perPage, search: search || undefined },
   });  
   return data;
 }
@@ -36,7 +36,7 @@ export async function createNote({
   content,
   tag,
 }: NewNote): Promise<Note> {
-  const { data } = await axios.post('/notes', { title, content, tag });
+  const { data } = await axios.post<Note>('/notes', { title, content, tag });
   return data;
 }
 // : має виконувати запит для створення нової нотатки на сервері. Приймає вміст нової нотатки та повертає створену нотатку у відповіді;
