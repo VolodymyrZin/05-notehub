@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import SearchBox from '../SearchBox/SearchBox';
 import css from './App.module.css';
 import {
@@ -13,7 +18,6 @@ import ErrorMessage from '../ErrorMessage/ErrorMessage';
 import NoteList from '../NoteList/NoteList';
 import Modal from '../Modal/Modal';
 import NoteForm from '../NoteForm/NoteForm';
-import ReactPaginate from 'react-paginate';
 import Pagination from '../Pagination/Pagination';
 
 export default function App() {
@@ -21,9 +25,10 @@ export default function App() {
   const [search, setSearch] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isLoading, isError, isFetching } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['notes', page, search],
     queryFn: () => fetchNotes({ page, search }),
+    placeholderData: keepPreviousData,
   });
   const handleCreateNote = () => {
     setIsModalOpen(true);
@@ -47,7 +52,6 @@ export default function App() {
     mutationFn: deleteNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
-      setIsModalOpen(false);
       console.log('Note deleted successfully');
     },
     onError: error => {
@@ -57,12 +61,24 @@ export default function App() {
   const handleDeleteNote = (id: string) => {
     deleteNoteMutation.mutate(id);
   };
+  const totalPages = data?.totalPages || 0;
+  const handleSearchChange = (newSearch: string) => {
+    setSearch(newSearch);
+    setPage(1);
+  };
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox />
-        {/* Компонент SearchBox */}
-        {<Pagination/>}
+        <SearchBox value={search} onChange={handleSearchChange} />
+        {totalPages > 1 && (
+          <Pagination
+            totalPages={totalPages}
+            currentPage={page}
+            onPageChange={nextPage => {
+              setPage(nextPage);
+            }}
+          />
+        )}
         {
           <button className={css.button} onClick={handleCreateNote}>
             Create note +
